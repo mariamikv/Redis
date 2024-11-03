@@ -12,6 +12,9 @@ fun main(args: Array<String>) {
     val inputStream = client.getInputStream()
     val outputStream = client.getOutputStream()
 
+    val buffer = ByteArray(1024)
+    val command = StringBuilder()
+
     while (true) {
         val data = inputStream.read()
 
@@ -19,7 +22,12 @@ fun main(args: Array<String>) {
             break
         }
 
-        outputStream.write("+PONG\r\n".toByteArray())
+        command.append(String(buffer, 0, data))
 
+       if (command.toString().contains("+PONG\r\n")) {
+           outputStream.write("+PONG\r\n".toByteArray())
+           outputStream.flush()
+           command.clear()
+       }
     }
 }
