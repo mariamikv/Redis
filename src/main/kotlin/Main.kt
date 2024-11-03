@@ -4,16 +4,20 @@ fun main(args: Array<String>) {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     System.err.println("Logs from your program will appear here!")
 
-    var serverSocket = ServerSocket(6379)
+    val serverSocket = ServerSocket(6379)
+    val client = serverSocket.accept()
+
+    val input = client.getInputStream()
+    val output = client.getOutputStream()
+
+    println("accepted new connection")
 
     while (true) {
-        val client = serverSocket.accept()
-        println("accepted new connection")
+        val request = input.bufferedReader()
+        val requestBody = request.readLine().orEmpty()
+        if(requestBody.isEmpty()) break
 
-        val outputStream = client.getOutputStream()
-        outputStream.write("+PONG\r\n".toByteArray())
-        outputStream.flush()
-
-        client.close()
+        output.write("+PONG\r\n".toByteArray())
+        output.flush()
     }
 }
