@@ -7,6 +7,19 @@ fun main(args: Array<String>) {
     var serverSocket = ServerSocket(6379)
     val client = serverSocket.accept()
 
-    client.getOutputStream().write("+PONG\r\n".toByteArray())
     println("accepted new connection")
+
+    val inputStream = client.getInputStream()
+    val outputStream = client.getOutputStream()
+
+    while (true) {
+        val data = inputStream.read()
+
+        if (data == -1) {
+            break
+        }
+
+        outputStream.write("+PONG\r\n".toByteArray())
+
+    }
 }
