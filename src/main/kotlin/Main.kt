@@ -5,21 +5,15 @@ fun main(args: Array<String>) {
     System.err.println("Logs from your program will appear here!")
 
     var serverSocket = ServerSocket(6379)
-    val client = serverSocket.accept()
-
-    println("accepted new connection")
-
-    val inputStream = client.getInputStream()
-    val outputStream = client.getOutputStream()
 
     while (true) {
-        val data = inputStream.read()
+        val client = serverSocket.accept()
+        println("accepted new connection")
 
-        if (data == -1) {
-            break
-        }
-
+        val outputStream = client.getOutputStream()
         outputStream.write("+PONG\r\n".toByteArray())
+        outputStream.flush()
 
+        client.close()
     }
 }
