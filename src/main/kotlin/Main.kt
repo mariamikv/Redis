@@ -7,6 +7,7 @@ import java.util.*
 fun main() = runBlocking {
     System.err.println("Logs from your program will appear here!")
     val serverSocket = ServerSocket(6379)
+    val dataStore = mutableMapOf<String, String>()
 
     while (true) {
         try {
@@ -14,7 +15,10 @@ fun main() = runBlocking {
             println("Accepted new connection")
 
             launch(Dispatchers.IO) {
-                handleClient(client)
+                handleClient(
+                    client = client,
+                    dataStore = dataStore,
+                )
             }
         } catch (e: Exception) {
             break
@@ -23,7 +27,7 @@ fun main() = runBlocking {
     serverSocket.close()
 }
 
-suspend fun handleClient(client: Socket) {
+suspend fun handleClient(client: Socket, dataStore: MutableMap<String, String>) {
     withContext(Dispatchers.IO) {
         val input = client.getInputStream()
         val output = client.getOutputStream()
@@ -42,6 +46,29 @@ suspend fun handleClient(client: Socket) {
                 }
                 (command == CommandTypes.ECHO.name && commandArgs.size > 1) -> {
                     output.write(encodeBulkString(commandArgs[1]))
+                }
+                command == CommandTypes.SET.name -> {
+                    if (commandArgs.size == 3) {
+                        val key = commandArgs[1]
+                        val value = commandArgs[2]
+                        dataStore[key] = value
+                        output.write("+OK\r\n".toByteArray())
+                    } else {
+                        output.write("-ERR wrong number of arguments for 'SET' command\r\n".toByteArray())
+                    }
+                }
+                command == CommandTypes.GET.name -> {
+                    if (commandArgs.size == 2) {
+                        val key = commandArgs[1]
+                        val value = dataStore[key]
+                        if (value != null) {
+                            output.write(encodeBulkString(value))
+                        } else {
+                            output.write("$-1\r\n".toByteArray())
+                        }
+                    } else {
+                        output.write("-ERR wrong number of arguments for 'GET' command\r\n".toByteArray())
+                    }
                 }
                 else -> {
                     output.write("-ERR unknown command\r\n".toByteArray())
